@@ -5,27 +5,12 @@
   <title>Teste D3</title>
 
    <style type="text/css">
-   .estados {
-       fill: #0f0;
-       fill-opacity: 0.8;
-       stroke: #f00;
-       stroke-linejoin: round;
-   }
 
-   .estados.AM, .estados.AC{
-       fill: #f00;
-   }
-
-   .contorno_estados{
-       fill: none;
-       stroke: #f00;
-       stroke-linejoin: round;
-   }
-
-   .municipios{
-
-   }
-   
+     .contorno{
+         fill: #fff;
+         stroke: #333;
+         stroke-linejoin: round;
+     }
    </style>
 
 </head>
@@ -33,7 +18,6 @@
   	<script src="https://d3js.org/d3.v4.min.js"></script>
   	<script src="https://d3js.org/d3-queue.v2.min.js"></script>
   	<script src="https://d3js.org/topojson.v2.min.js"></script>
-
     <script>
         // Defini altura e largura
         var width = 800, height = 400; 
@@ -43,7 +27,6 @@
 
         var projection = d3.geoMercator().scale(300)
                .rotate([50,0,0])
-               .center([-55,-15])
                .translate([width/2, height/2])
                .clipAngle(90);
         var path = d3.geoPath().projection(projection);
@@ -52,37 +35,52 @@
            .scaleExtent([1, 40])
            .translateExtent([[-100, -100], [width + 90, height + 100]])
            .on("zoom", zoomed);
-
         g.call(zoom);
 
-        // Carrega o arquivo JSON
-        d3.json("d3/brasil.json", function(error, shp){
-            if (error) return console.error(error);
-            // Projeta o mapa
- 
-            //console.log(shp.objects);
-            var subunits = topojson.feature(shp, shp.objects.brasil);
+        var mapa = d3.map();
 
-            g.selectAll(".estados")
-                .data(subunits.features).enter().append("path")
-                .attr("class", function(d){ 
-                    return "estados " + d.properties.sigla; })
-                .attr("d", path);
+        var quantize = d3.scaleQuantize()
+          .domain([0, 500])
+          .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
 
-            g.append("path")
-               .datum(subunits).attr("d", path)
-               .attr("class", "contorno_estados");
-
-            g.append("path")
-		    .datum(topojson.feature(uk, uk.objects.places))
-		    .attr("d", path)
-		    .attr("class", "place");
-
-       }); // Fim d3.json (estados brasileiros)
+        d3.queue()
+              .defer(d3.json, "d3/brasil.json")
+              .defer(d3.tsv, "data/enemcota.tsv", function(d) {
+                  mapa.set(d.uf, +d.quantidade);
+                  //console.log(d.uf);
+              })
+              .await(carregarmapa);
 
        function zoomed(){
            g.attr("transform", d3.event.transform);
        }
+
+       function carregarmapa(error, shp) {
+            // Projeta o mapa
+           if (error) return console.error(error);
+            var subunits = topojson.feature(shp, shp.objects.brasil);
+
+           /* g.selectAll(".estados")
+                .data(subunits.features).enter().append("path")
+                .attr("class", function(d){ 
+                  //console.log(d);
+                    return "estados " + d.properties.sigla; })
+                .attr("d", path);*/
+
+            g.append("path")
+               .datum(subunits).attr("d", path)
+               .attr("class", "contorno");
+
+            g.selectAll(".estados")
+              .data(subunits.features).enter().append("path")
+              .attr("d", path)
+              .attr("class", function(d) { 
+                //console.log(d.properties.sigla);
+                return quantize(mapa.get(d.properties.sigla));
+              
+            });
+
+        }
 
    </script>
 
