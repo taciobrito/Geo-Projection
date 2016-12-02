@@ -5,124 +5,129 @@
   <title>Teste D3</title>
 
    <style type="text/css">
+      svg{
+        background-color: #ddd;
+      }
 
-  
+      .municipios{
+        stroke: #333;
+        stroke-width: 0.2;
+      }
+
+      .selected{
+        fill: yellow;
+      }
+
+      .hidden { 
+        display: none;
+      }
+
+      .tooltip {
+        color: #222; 
+        background-color: #fff; 
+        padding: .5em; 
+        text-shadow: #f5f5f5 0 1px 0;
+        border-radius: 2px; 
+        box-shadow: 0px 0px 2px 0px #a6a6a6; 
+        opacity: 0.9; 
+        position: absolute;
+      }
+
+      .pathpais { 
+        stroke: #666; stroke-width: .5px; fill: white; 
+      }
+
+      .pathpais:hover { 
+        fill: #666;
+      }
    </style>
-
+      
 </head>
 <body>
-  	<script src="https://d3js.org/d3.v4.min.js"></script>
-  	<script src="https://d3js.org/d3-queue.v2.min.js"></script>
-  	<script src="https://d3js.org/topojson.v2.min.js"></script>
+  	<script src="d3/d3.v4.min.js"></script>
+  	<script src="d3/d3-queue.v2.min.js"></script>
+  	<script src="d3/topojson.v2.min.js"></script>
     <script>
         // Defini altura e largura
-        var width = 960, height = 500;
+        var width = 900, height = 500;
 
         var svg = d3.select("body").append("svg")
            .attr("width", width).attr("height", height);
         
         var color = d3.scaleLinear()
-          .domain([2, 30])
-          .range(["#00ff00", "#0000ff"]);
+          .domain([0, 20, 40, 60, 80, 100])
+          .range(["#ff0000", "#ff8a00", "#ffff00", "#00ff00", "#00f6ff", "#0000ff"]);
 
-        var transform = d3.zoomIdentity;
-        
-
-        var projection = d3.geoMercator();
-
-        var sf = projection([-122.417, 37.775]);
-        var center = projection.translate();
-
-        var scale, translate, area; // minimum area threshold
-
-        var clip = d3.geoClipExtent()
-            .extent([[0, 0], [width, height]]);
-
-        var simplify = d3.geoTransform({
-          point: function(x, y, z) {
-            if (z >= area) this.stream.point(x * scale + translate[0], y * scale + translate[1]);
-          }
-        });
-
-        /*var projection = d3.geoMercator().scale([300])
-               .center([0,1])
+        var projection = d3.geoMercator().scale([width - 220])
+               .center([0,0])
                .rotate([50,0,0])
-               .translate([width/2, height/2])
-               .clipAngle(90);*/
-
-        var g = svg.append("g");
+               .translate([width/2, height/5])
+               .clipAngle(90);
 
         var path = d3.geoPath().projection(projection);
         
+        var g = svg.append("g");
+        
+        var transform = d3.zoomIdentity;
+
         svg.call(d3.zoom()
-            .scaleExtent([1 / 2, 8])
-            .on("zoom", zoomed));
-
-        /*var zoom = d3.zoom()
-           .scaleExtent([1, 40])
-           .translateExtent([[-100, -100], [width + 90, height + 100]])
-           .on("zoom", zoomed);
-        g.call(zoom);*/
-
-        /*var mapa = d3.map();
-
-        var quantize = d3.scaleQuantize()
-          .domain([0, 500])
-          .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));*/
+          .scaleExtent([1 , 8])
+          .on("zoom", zoomed));
+        
+        var map = d3.map();
+        var mapa = "municipios";
 
         d3.queue()
-              .defer(d3.json, "d3/brasil.json")
+              .defer(d3.json, "d3/"+mapa+".json")
+              .defer(d3.tsv, "data/enemcota.tsv", function(d) {
+                map.set(d.municipio, d.percentual);
+              })
               .await(carregarmapa);
-              //.defer(d3.tsv, "data/enemcota.tsv", function(d) {
-                 // mapa.set(d.uf, +d.quantidade);
-                  //console.log(d.uf);
-              //})
 
-       function zoomed(){
-           g.attr("transform", d3.event.transform);
-       }
-
-       function dragged(d) {
-          d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
-        }
-
-       function carregarmapa(error, shp) {
-           if (error) return console.error(error);
+      function carregarmapa(error, shp) {
+        if (error) return console.error(error);
             
-            // Projeta o mapa
-            var estados = topojson.feature(shp, shp.objects.brasil);
+          // Projeta o mapa
+          var municipios = topojson.feature(shp, shp.objects[mapa]);
+          var dados = topojson.mesh(shp, shp.objects[mapa]);
+         
+          /*var tooltip = g.append("div")
+            .attr("class", "tooltip hidden");*/
 
-           /*g.selectAll(".estados")
-                .data(estados.features).enter().append("path")
-                .attr("class", function(d){ 
-                  console.log(d.properties.sigla);
-                    return "estados " + d.properties.sigla; })
-                .attr("d", path);*/
-
-            g.append("path")
-               .datum(estados)
-               .attr("d", path);
-
-            g.selectAll(".estados")
-              .data(estados.features)
+          g.selectAll(".municipios")
+              .data(municipios.features)              
               .enter().append("path")
-              .style("fill", function(d){ return color(d.properties.NM_MUNICIP.replace(/\s+/g, '').length); })
-                  
-              .attr("cx", function(d) { return d.x; })
-              .attr("cy", function(d) { return d.y; })
-              .attr("r", 2.5)
-              .call(d3.drag()
-                  .on("drag", dragged))
-              .attr("d", path);
+              .attr("class", "municipios")
+              .style("fill", function(d){ 
+                var cor = color(map.get(d.properties.nome.toUpperCase()));
+                return cor == undefined ? '#fff' : cor; })
+              .attr("d", path)
+              .on("mouseover", function(d){
+                console.log(d);
+                d3.select(this).classed("selected", true)
+                  //.text(function(d){return d.properties.nome;});
+              })
+              .on("mouseout", function(d){
+                d3.select(this).classed("selected", false)
+              })
 
 
-           /* g.selectAll(".estados")
-               .attr("class", "estados")
-              .data(estados.features).enter().append("path")
-              .style("fill", function(d){return color(d.properties.NM_MUNICIP.replace(/\s+/g, '').length); })
-              .attr("d", path);*/
+          svg.selectAll(".muni")
+            .data(dados)
+            .enter().append("circle")
+            .attr("r", 2)
+            .attr("x", 10)
+            .attr("y", 10);
 
-        }
+         /* g.selectAll("text")
+            .data(municipios.features).enter().append("text")
+            .attr("x", function(d){return path.centroid(d)[0];})
+            .attr("y", function(d){return path.centroid(d)[1];})*/
+      }
+
+      function zoomed(){
+          g.attr("transform", d3.event.transform);
+      }
 
    </script>
 
