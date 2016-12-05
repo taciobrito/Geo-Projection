@@ -56,8 +56,7 @@
           projection = d3.geoMercator().scale([width - 220])
                  .center([0,0])
                  .rotate([50,0,0])
-                 .translate([width/2, height/5])
-                 .clipAngle(90);
+                 .translate([width/2, height/5]);
 
           // Cria o path da projeção
           path = d3.geoPath().projection(projection);
@@ -125,6 +124,19 @@
               d3.select(this)
                   .style("fill", "#fff")
                   .style("stroke-width", "0.8px")
+
+              var mouse = d3.mouse(g.node()).map( function(d) { return parseInt(d); } );
+              var left = (mouse[0]+20);
+              var top = (mouse[1]+75);
+
+              //console.log(mouse);
+
+              tooltip.classed("hidden", false)
+              .style("left", (left) + "px")
+              .style("top", (top - 25) + "px")
+              //.attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
+              .html(d.properties.nome);
+              //console.log(d.properties.nome);
             })
             .on("mouseout", function(d){
               d3.select(this)
@@ -135,8 +147,11 @@
                     cor = colorirMapa(map.get(d.properties.NM_MUNICIP)); 
                   }
                   return cor == undefined ? '#fff' : cor; })
-                .style("stroke-width", "0.2px")
+                .style("stroke-width", "0.2px");
+              g.select("tooltip").classed("hidden", true);
             });
+
+          var tooltip = g.append("div").attr("class", "tooltip hidden");
       } //FIM carregamapa
 
       // função de zoom
