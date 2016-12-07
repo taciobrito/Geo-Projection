@@ -1,6 +1,7 @@
 .municipios{
   stroke: #333;
   stroke-width: 0.2;
+  cursor: pointer;
 }
 
 .hidden { 
@@ -43,3 +44,8 @@
     opacity: 0.9; 
     position: absolute;
   }
+
+ .background {
+  fill: none;
+  pointer-events: all;
+}
