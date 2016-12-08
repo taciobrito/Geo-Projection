@@ -21,6 +21,22 @@
   $sql_estados = "SELECT * FROM jos_uf order by sigla_uf ASC";
   $query = mysqli_query($conexao, $sql_estados);
 
+  $sql_desastres = "SELECT uf, mapas_desastres, ibge FROM des_mapa_desastre";
+  $query2 = mysqli_query($conexao, $sql_desastres);
+  
+  $i = 0;
+  $desastres = array();
+  while ($teste = mysqli_fetch_array($query2)) {
+    // print_r($teste);
+    // array_push($desastres, $teste);
+    // print_r($desastres);
+    $desastres[$teste['uf']][] = $teste;
+    $i++;
+  }
+  //print_r($desastres);die;
+
+  $desastres_json = json_encode($desastres);
+  //echo $desastres_json;
 ?>
 
   <div class="painel-seleciona">
@@ -38,6 +54,11 @@
   	<script src="js/d3-queue.v2.min.js"></script>
   	<script src="js/topojson.v2.min.js"></script>
     <script>
+      var desastres1 = '<?php echo $desastres_json; ?>';
+      var desastres = JSON.parse(desastres1);
+      //console.log(desastres);
+      console.log(desastres['AC'][0]['ibge']);
+
         // Define altura e largura da área de trabalho
         var width = $(window).width(), height = 550;
 
@@ -72,6 +93,11 @@
           colorirMapa = d3.scaleLinear()
             .domain([0, 20, 40, 60, 80, 100])
             .range(["#ff0000", "#ff8a00", "#ffff00", "#00ff00", "#00f6ff", "#0000ff"]);
+
+            /*$seca = '#FF8C00';
+            $chuva = '#0000FF';
+            $outros = '#228B22';
+            $nao_info = '#D7D4D4';*/
 
           map = d3.map();
         } // FIM criaSVG
@@ -138,14 +164,17 @@
                 .on("mouseover", function(d){
                     d3.select(this)
                       .style("fill", "#ffffff")
+                      .style("stroke-width", "1")
+                      .style("stroke", "#228B22")
                 })
                 .on("mouseout", function(d){
                     d3.select(this)
                     .style("fill", function(d){
                         cor = colorirMapa(map.get(nome_municipio(d)));
                         return cor == undefined ? "#ffffff" : cor; })
-                    .style("stroke-width", "0.2px");
-                  
+                    .style("stroke", "#333")
+                    .style("stroke-width", "0.2");
+
                   tooltip.classed("aparece_muni", true);
                 })
                 .on("mousemove", function(d,i){
