@@ -9,11 +9,7 @@
 
      <style type="text/css">
         svg{
-          background-color: #ddd;
-        }
-
-        circle{
-          fill: #000;
+          background-color: #a3ccff;
         }
      </style>
       
@@ -43,7 +39,8 @@
   	<script src="js/topojson.v2.min.js"></script>
     <script>
         // Define altura e largura da área de trabalho
-        var width = 900, height = 500;
+        var width = $(window).width(), height = 550;
+
         // variáveis globais
         var svg, projection, path, g, transform, colorirMapa, map, zoom;
         active = d3.select(null);
@@ -102,73 +99,66 @@
 
         //função responsável por desenhar o mapa
         function carregarmapa(error, shp) {
-          if (error) return console.error(error); // verifica a existência de erros
-              
-          // Recupera as informações dos arquivos passados
-          var municipios = topojson.feature(shp, shp.objects[mapa]);
-          var dados = topojson.mesh(shp, shp.objects[mapa]);
-          
-          var scale = 500,
-              center = d3.geoCentroid(municipios),
-              offset = [width / 2, height / 2];
+            
+            function nome_municipio(d){
+                return (mapa == "municipios") ? d.properties.nome.toUpperCase() : d.properties.NM_MUNICIP;
+            }
 
-          // Chama a função que cria projeção
-          criaProjecao(scale, center, offset);
+            if (error) return console.error(error); // verifica a existência de erros
+                
+            // Recupera as informações dos arquivos passados
+            var municipios = topojson.feature(shp, shp.objects[mapa]);
+            var dados = topojson.mesh(shp, shp.objects[mapa]);
+            
+            var scale = 600,
+                center = d3.geoCentroid(municipios),
+                offset = [width / 2, height / 2];
 
-          var bounds = path.bounds(municipios),
-              scaleX = scale * width / (bounds[1][0] - bounds[0][0]),
-              scaleY = scale * height / (bounds[1][1] - bounds[0][1]),
-              scale = (scaleX < scaleY) ? scaleX : scaleY,
-              offset = [(width - (bounds[0][0] + bounds[1][0]) / 2), (height - (bounds[0][1] + bounds[1][1]) / 2)];
+            // Chama a função que cria projeção
+            criaProjecao(scale, center, offset);
 
-          // Chama NOVAMENTE a função que cria projeção
-          criaProjecao(scale, center, offset);
+            var bounds = path.bounds(municipios),
+                scaleX = scale * width / (bounds[1][0] - bounds[0][0]),
+                scaleY = scale * height / (bounds[1][1] - bounds[0][1]),
+                scale = (scaleX < scaleY) ? scaleX : scaleY,
+                offset = [(width - (bounds[0][0] + bounds[1][0]) / 2), (height - (bounds[0][1] + bounds[1][1]) / 2)];
 
-          // projeta o mapa e o pinta
-          g.selectAll(".municipios")
-              .data(municipios.features)              
-              .enter().append("path")
-              .attr("class", "municipios")
-              .style("fill", function(d){
-                if(mapa == "municipios"){
-                  cor = colorirMapa(map.get(d.properties.nome.toUpperCase()));
-                } else { 
-                  cor = colorirMapa(map.get(d.properties.NM_MUNICIP)); 
-                }
-                return cor == undefined ? '#fff' : cor; })
-              .attr("d", path)
-              .on("mouseover", function(d){
-                d3.select(this)
-                    .style("fill", "#fff")
-                    .style("stroke-width", "0.8px")
-                              /*var mouse = d3.mouse(g.node()).map( function(d) { return parseInt(d); } );
-                              var left = (mouse[0]+20);
-                              var top = (mouse[1]+75);
+            // Chama NOVAMENTE a função que cria projeção
+            criaProjecao(scale, center, offset);
 
-                              //console.log(mouse);
+            // projeta o mapa e o pinta
+            g.selectAll(".municipios")
+                .data(municipios.features)              
+                .enter().append("path")
+                .attr("class", "municipios")
+                .style("fill", function(d){
+                    cor = colorirMapa(map.get(nome_municipio(d)));
+                    return cor == undefined ? "#ffffff" : cor; })
+                .attr("d", path)
+                .on("mouseover", function(d){
+                    d3.select(this)
+                      .style("fill", "#ffffff")
+                })
+                .on("mouseout", function(d){
+                    d3.select(this)
+                    .style("fill", function(d){
+                        cor = colorirMapa(map.get(nome_municipio(d)));
+                        return cor == undefined ? "#ffffff" : cor; })
+                    .style("stroke-width", "0.2px");
+                  
+                  tooltip.classed("aparece_muni", true);
+                })
+                .on("mousemove", function(d,i){
+                    var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
+                    var left = (mouse[0]+20);
+                    var top = (mouse[1]+50);
+                    
+                    tooltip.classed("aparece_muni", false)
+                    .attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
+                    .html(nome_municipio(d)+"<br />"+map.get(nome_municipio(d))+"%");//+"<br />Total: "+map.get(d.total)+"<br />Porcentagem: "+map.get(d.percentual)+"%");
+                })
+                .on("click", clicked);
 
-                              tooltip.classed("hidden", false)
-                              .style("left", (left) + "px")
-                              .style("top", (top - 25) + "px")
-                              //.attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
-                              .html(d.properties.nome);
-                              //console.log(d.properties.nome);*/
-              })
-              .on("mouseout", function(d){
-                d3.select(this)
-                  .style("fill", function(d){ 
-                    if(mapa == "municipios"){                      
-                      cor = colorirMapa(map.get(d.properties.nome.toUpperCase()));
-                    } else { 
-                      cor = colorirMapa(map.get(d.properties.NM_MUNICIP)); 
-                    }
-                    return cor == undefined ? '#fff' : cor; })
-                  .style("stroke-width", "0.2px");
-                g.select("tooltip").classed("hidden", true);
-              })
-              .on("click", clicked);
-
-            var tooltip = g.append("div").attr("class", "tooltip hidden");
         } //FIM carregamapa
 
         function clicked(d) {
@@ -207,6 +197,25 @@
         function stopped() {
           if (d3.event.defaultPrevented) d3.event.stopPropagation();
         }
+
+        // Configuração de Redimensionamento
+        function redimensionar(){
+            width = $(window).width();
+        }
+
+        window.addEventListener("orientationchange", function () {
+            redimensionar();
+        }, false);
+
+        window.addEventListener("resize", function () {
+            redimensionar();
+        }, false);
+
+        $(document).on('ready', function () {
+            redimensionar();
+        }); // FIM configurações do redimensionamento
+
+        var tooltip = d3.select("body").append("div").attr("class", "info_muni aparece_muni");
 
         criaSvg();
 

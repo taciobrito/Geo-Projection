@@ -1,51 +1,51 @@
 .municipios{
-  stroke: #333;
-  stroke-width: 0.2;
-  cursor: pointer;
+	stroke: #333;
+	stroke-width: 0.2;
+	stroke-dasharray: 2;
+	cursor: pointer;
 }
 
-.hidden { 
-  display: none;
+.municipios:hover{
+	stroke: #228B22;
+	stroke-width: 0.8;
+	stroke-dasharray: 0;
 }
 
-.pathpais { 
-  stroke: #666; stroke-width: .5px; fill: white; 
-}
-
-.pathpais:hover { 
-  fill: #666;
-}
-
-.painel-seleciona{
-  position: absolute;
-  width: 150px;
-  padding: 5px;
-  border-radius: 2px;
-  background-color: #ccc;
+.painel-seleciona{	
+	position: absolute;
+	width: 150px;
+	padding: 5px;
+	border-radius: 2px;
+	background-color: #ccc;
 }
 
 .seleciona{
-  position: relative;
-  width: 100%;
-  padding: 5px;
-  border-radius: 5px;
+	position: relative;
+	width: 100%;
+	padding: 5px;
+	border-radius: 5px;
 }
 
-.hidden {
-	display: none;
+.background {
+	fill: none;
+	pointer-events: all;
 }
 
- .tooltip {
-    color: #222; 
-    background: #fff; 
-    padding: 5px; 
-    box-shadow: #666 2px 2px 5px;
-    border-radius: 2px; 
-    opacity: 0.9; 
+.info_muni {
+    color: #fff;
+    font-size: 9pt;
+    font-weight: bold;
+    background: #000;
+    padding: 5px 7px;
+    border-radius: 2px;
+    box-shadow: 0px 0px 2px 0px #a6a6a6;
+    opacity: 0.8;
     position: absolute;
-  }
+    /*top: 0px;
+    left: 151px;
+    */
+}
 
- .background {
-  fill: none;
-  pointer-events: all;
+.aparece_muni { 
+	display: none; 
 }
