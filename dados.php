@@ -9,13 +9,17 @@ $sql_desastres = "SELECT * FROM des_mapa_desastre";
 $query = mysqli_query($conexao, $sql_desastres);
 
 
-echo 'id	id_municipio	municipio	uf	estado	mapas_desastres	tipo_desastre	vigencia	ibge';
+$string = "id\tid_municipio\tmunicipio\tuf\testado\tmapas_desastres\ttipo_desastre\tvigencia\tibge";
 
 while ($estado = mysqli_fetch_assoc($query)){
-	// print_r($estado);die;
-	echo '<br/>'.$estado['id'].'	'.$estado['id_municipio'].'	'.$estado['municipio']
-		.'	'.$estado['uf'].'	'.$estado['estado'].'	'.$estado['mapas_desastres']
-		.'	'.$estado['tipo_desastre'].'	'.$estado['vigencia'].'	'.$estado['ibge'];
+	$string .= "\n";
+	foreach ($estado as $key => $value) {
+		$string .= $value . "\t";
+	}
+	/*echo "\n".$estado['id']."\t".$estado['id_municipio']."\t".$estado['municipio']
+		."\t".$estado['uf']."\t".$estado['estado']."\t".$estado['mapas_desastres']
+		."\t".$estado['tipo_desastre']."\t".$estado['vigencia']."\t".$estado['ibge'];*/
 }
 
+echo $string;
 ?>

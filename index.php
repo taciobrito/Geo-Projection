@@ -82,6 +82,7 @@
           d3.queue()
             .defer(d3.json, "maps/"+mapa+".json")
             .defer(d3.tsv, "dados.php", function(d) {
+              console.log(d.id);
               map.set(d.municipio, d.mapas_desastres);
             })
             .await(carregarmapa);
