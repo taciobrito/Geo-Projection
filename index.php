@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
-  <title>Teste D3</title>
+  <title>Teste D3 - Geo-Projection</title>
 
     <link rel="stylesheet" type="text/css" href="css/estilo.css" />
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
@@ -17,8 +17,13 @@
 <body>
 
 <?php 
-  $conexao = mysqli_connect("localhost", "root", "", "desastres");
-  $sql_estados = "SELECT * FROM jos_uf order by sigla_uf ASC";
+  $conexao = mysqli_connect("localhost", "root", "123456", "desastres");
+  mysqli_query($conexao, "SET NAMES 'utf8'");
+  mysqli_query($conexao, 'SET character_set_connection=utf8');
+  mysqli_query($conexao, 'SET character_set_client=utf8');
+  mysqli_query($conexao, 'SET character_set_results=utf8');
+
+  $sql_estados = "SELECT * FROM des_recursos_uf order by uf ASC";
   $query = mysqli_query($conexao, $sql_estados);
 ?>
 
@@ -27,7 +32,7 @@
     <select class="seleciona">
       <option value="municipios" selected>Todos</option>
         <?php while ($estado = mysqli_fetch_assoc($query)){ ?>
-          <option value="<?php echo $estado['sigla_uf']; ?>"><?php echo $estado['sigla_uf']; ?></option>
+          <option value="<?php echo $estado['uf']; ?>"><?php echo $estado['uf']; ?></option>
         <?php } ?>
     </select>
   </div>
@@ -42,7 +47,7 @@
         var width = $(window).width(), height = 550;
 
         // variáveis globais
-        var svg, projection, path, g, transform, colorirMapa, map, zoom;
+        var svg, projection, path, g, transform, cor, map, zoom;
         active = d3.select(null);
 
         function criaSvg(){
@@ -67,12 +72,6 @@
           
           // Faz a chamada do zoom
           svg.call(zoom);
-          
-          // Define um range de cores para pintar o mapa
-          /*colorirMapa = d3.scaleLinear()
-            .domain([0, 20, 40, 60, 80, 100])
-            .range(["#ff0000", "#ff8a00", "#ffff00", "#00ff00", "#00f6ff", "#0000ff"]);
-*/
 
           map = d3.map();
         } // FIM criaSVG
@@ -82,12 +81,12 @@
           d3.queue()
             .defer(d3.json, "maps/"+mapa+".json")
             .defer(d3.tsv, "dados.php", function(d) {
-              console.log(d.id);
-              map.set(d.municipio, d.mapas_desastres);
+              map.set(d.ibge, d);
             })
             .await(carregarmapa);
         } // FIM chamaQueue
 
+        // Cria a projeção do mapa
         function criaProjecao(scale, center, offset){
             // Define o tipo de projeção
             projection = d3.geoMercator()
@@ -102,15 +101,30 @@
         //função responsável por desenhar o mapa
         function carregarmapa(error, shp) {
             
+            // Função que retorna o nome do municipio formatado
+            function codigo_municipio(d){
+                return (mapa == "municipios") ? d.properties.id.substring(0, 6) : d.properties.CD_GEOCODM.substring(0, 6);
+            }
+
+            // Função que retorna o nome do municipio formatado
             function nome_municipio(d){
                 return (mapa == "municipios") ? d.properties.nome.toUpperCase() : d.properties.NM_MUNICIP;
             }
 
-            function colorirMapa(){
-                 /*$seca = '#FF8C00';
-                  $chuva = '#0000FF';
-                  $outros = '#228B22';
-                  $nao_info = '#D7D4D4';*/
+            // Função para colorir o mapa
+            function colorirMapa(desastre){
+                switch(desastre){
+                    case "seca": cor = "#ff8c00";
+                      break;
+                    case "chuva": cor = "#0000ff";
+                      break;
+                    case "outros": cor = "#228b22";
+                      break;
+                    case "stroke": cor = "#e6e6e6";
+                      break;
+                    default: cor = "#d7d4d4";
+                }
+                return cor;
             }
 
             if (error) return console.error(error); // verifica a existência de erros
@@ -137,38 +151,53 @@
 
             // projeta o mapa e o pinta
             g.selectAll(".municipios")
-                .data(municipios.features)              
+                .data(municipios.features)
                 .enter().append("path")
                 .attr("class", "municipios")
                 .style("fill", function(d){
-                    cor = colorirMapa();
-                    console.log(map.get(nome_municipio(d)));
-                    return cor == undefined ? "#e6e6e6" : cor; })
+                    var a = map.get(codigo_municipio(d));
+                    cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
+                    return cor; })
+                .style("stroke", function(d){
+                    var a = map.get(codigo_municipio(d));
+                    cor = colorirMapa(a == undefined ? "stroke" : a.mapas_desastres);
+                    return cor; })
+                .style("stroke-opacity", "0.3")
                 .attr("d", path)
                 .on("mouseover", function(d){
                     d3.select(this)
-                      .style("fill", "#e6e6e6")
+                      .style("fill", function(d){
+                        var a = map.get(codigo_municipio(d));
+                        cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
+                        return cor; })
                       .style("stroke-width", "1")
-                      .style("stroke", "#228B22")
+                      .style("stroke", "#228b22")
                 })
                 .on("mouseout", function(d){
                     d3.select(this)
                     .style("fill", function(d){
-                        cor = colorirMapa(map.get(nome_municipio(d)));
-                        return cor == undefined ? "#e6e6e6" : cor; })
-                    .style("stroke", "#e6e6e6")
-                    .style("stroke-width", "0.05");
+                        var a = map.get(codigo_municipio(d));
+                        cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
+                        return cor; })
+                    .style("stroke-width", "")
+                    .style("stroke", function(d){
+                        var a = map.get(codigo_municipio(d));
+                        cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
+                        return cor; });
 
                   tooltip.classed("aparece_muni", true);
                 })
-                .on("mousemove", function(d,i){
+                .on("mousemove", function(d){
                     var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
                     var left = (mouse[0]+20);
                     var top = (mouse[1]+50);
-                    
+
+                    var a = map.get(codigo_municipio(d));
+                    var desastre = a != undefined ? "DESASTRE: " + a.mapas_desastres.toUpperCase() : "";
+
                     tooltip.classed("aparece_muni", false)
-                    .attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
-                    .html(nome_municipio(d)+"<br />"+map.get(nome_municipio(d))+"%");//+"<br />Total: "+map.get(d.total)+"<br />Porcentagem: "+map.get(d.percentual)+"%");
+                        .attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
+                        .html(nome_municipio(d)+"<br />" + desastre);
                 })
                 .on("click", clicked);
 
@@ -203,7 +232,7 @@
 
         // função de zoom
         function zoomed() {
-            g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+            g.style("stroke-width", 1 / d3.event.transform.k + "px");
             g.attr("transform", d3.event.transform);
         } // FIM zoomed
 
@@ -228,10 +257,13 @@
             redimensionar();
         }); // FIM configurações do redimensionamento
 
+        // Cria div do tooltipo
         var tooltip = d3.select("body").append("div").attr("class", "info_muni aparece_muni");
 
+        // Cria a área de trabalho svg
         criaSvg();
 
+        // Troca o mapa de acordo com o selecionado no combo
         var mapa = $('.seleciona').val();
         $('.seleciona').change(function(){
           mapa = $('.seleciona').val().toLowerCase();
@@ -240,6 +272,7 @@
           chamaQueue();
         });
 
+        // Chama a função que envia os dados
         chamaQueue();
 
    </script>
