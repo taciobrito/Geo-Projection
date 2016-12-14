@@ -162,7 +162,10 @@
                     var a = map.get(codigo_municipio(d));
                     cor = colorirMapa(a == undefined ? "stroke" : a.mapas_desastres);
                     return cor; })
-                .style("stroke-opacity", "0.3")
+                .style("stroke-opacity", function(d){
+                    var a = map.get(codigo_municipio(d));
+                    var opacidade = a == undefined ? "1" : "0.2";
+                    return opacidade; })
                 .attr("d", path)
                 .on("mouseover", function(d){
                     d3.select(this)
@@ -172,6 +175,7 @@
                         return cor; })
                       .style("stroke-width", "1")
                       .style("stroke", "#228b22")
+                      .style("stroke-opacity", "1");
                 })
                 .on("mouseout", function(d){
                     d3.select(this)
@@ -183,7 +187,11 @@
                     .style("stroke", function(d){
                         var a = map.get(codigo_municipio(d));
                         cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
-                        return cor; });
+                        return cor; })
+                    .style("stroke-opacity", function(d){
+                        var a = map.get(codigo_municipio(d));
+                        var opacidade = a == undefined ? "1" : "0.2";
+                        return opacidade; })
 
                   tooltip.classed("aparece_muni", true);
                 })
