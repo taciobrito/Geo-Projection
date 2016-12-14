@@ -191,7 +191,7 @@
                       .style("stroke-opacity", function(d){
                           var a = map.get(codigo_municipio(d));
                           var opacidade = a == undefined ? "1" : "0.2";
-                          return opacidade; })
+                          return opacidade; });
 
                     tooltip.classed("aparece_muni", true);
                 })
