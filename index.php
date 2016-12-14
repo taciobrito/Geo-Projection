@@ -179,21 +179,21 @@
                 })
                 .on("mouseout", function(d){
                     d3.select(this)
-                    .style("fill", function(d){
-                        var a = map.get(codigo_municipio(d));
-                        cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
-                        return cor; })
-                    .style("stroke-width", "")
-                    .style("stroke", function(d){
-                        var a = map.get(codigo_municipio(d));
-                        cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
-                        return cor; })
-                    .style("stroke-opacity", function(d){
-                        var a = map.get(codigo_municipio(d));
-                        var opacidade = a == undefined ? "1" : "0.2";
-                        return opacidade; })
+                      .style("fill", function(d){
+                          var a = map.get(codigo_municipio(d));
+                          cor = colorirMapa(a == undefined ? "" : a.mapas_desastres);
+                          return cor; })
+                      .style("stroke-width", "")
+                      .style("stroke", function(d){
+                          var a = map.get(codigo_municipio(d));
+                          cor = colorirMapa(a == undefined ? "stroke" : a.mapas_desastres);
+                          return cor; })
+                      .style("stroke-opacity", function(d){
+                          var a = map.get(codigo_municipio(d));
+                          var opacidade = a == undefined ? "1" : "0.2";
+                          return opacidade; })
 
-                  tooltip.classed("aparece_muni", true);
+                    tooltip.classed("aparece_muni", true);
                 })
                 .on("mousemove", function(d){
                     var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
