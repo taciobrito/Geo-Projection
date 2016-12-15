@@ -16,6 +16,8 @@
 </head>
 <body>
 
+<script type="text/javascript">var svg, projection, path, g, transform, cor, map, zoom, mapa;</script>
+
 <?php 
   $conexao = mysqli_connect("localhost", "root", "123456", "desastres");
   mysqli_query($conexao, "SET NAMES 'utf8'");
@@ -29,12 +31,28 @@
 
   <div class="painel-seleciona">
     <label>Selecione o Mapa:</label>
-    <select class="seleciona">
+    <select class="seleciona mapa">
+      <option value="municipios" selected>Todos</option>
+        
+    </select>
+
+    <label>Selecione UF:</label>
+    <select class="seleciona uf">
       <option value="municipios" selected>Todos</option>
         <?php while ($estado = mysqli_fetch_assoc($query)){ ?>
           <option value="<?php echo $estado['uf']; ?>"><?php echo $estado['uf']; ?></option>
         <?php } ?>
     </select>
+
+    <script> if(mapa != "municipios"){
+        $(".municip").show();
+    } else {$(".municip").hide();}
+    </script>
+      <label>Selecione Município:</label>
+      <select class="seleciona municip">
+        <option value="municipios" selected>Todos</option>
+          
+      </select>
   </div>
 
     <script src="js/jquery.min.js"></script>
@@ -80,6 +98,7 @@
         function chamaQueue(){
           d3.queue()
             .defer(d3.json, "maps/"+mapa+".json")
+            .defer(d3.json, "maps/brasil.json")
             .defer(d3.tsv, "dados.php", function(d) {
               map.set(d.ibge, d);
             })
@@ -200,12 +219,19 @@
                     var left = (mouse[0]+20);
                     var top = (mouse[1]+50);
 
+                    var desastre = "", tipo_desastre = "", vigencia = "";
                     var a = map.get(codigo_municipio(d));
-                    var desastre = a != undefined ? "DESASTRE: " + a.mapas_desastres.toUpperCase() : "";
+                        if(a != undefined){
+                            desastre = "<br />TIPO DE DESASTRE: " + a.tipo_desastre.toUpperCase();
+                            tipo_desastre = "<br />DESASTRE: " + a.mapas_desastres.toUpperCase();
+                            
+                            var date = new Date(a.vigencia);
+                            vigencia = "<br />VIGÊNCIA: " + date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear();
+                        }
 
                     tooltip.classed("aparece_muni", false)
                         .attr("style", "left:"+(left)+"px;top:"+(top-25)+"px")
-                        .html(nome_municipio(d)+"<br />" + desastre);
+                        .html(nome_municipio(d) + tipo_desastre + desastre + vigencia);
                 })
                 .on("click", clicked);
 
@@ -272,9 +298,9 @@
         criaSvg();
 
         // Troca o mapa de acordo com o selecionado no combo
-        var mapa = $('.seleciona').val();
-        $('.seleciona').change(function(){
-          mapa = $('.seleciona').val().toLowerCase();
+        mapa = $('.uf').val();
+        $('.uf').change(function(){
+          mapa = $('.uf').val().toLowerCase();
           $('svg').remove();
           criaSvg();
           chamaQueue();
