@@ -45,7 +45,7 @@
     </select>
 
     <script> if(mapa != "municipios"){
-        $(".municip").show();
+        
     } else {$(".municip").hide();}
     </script>
       <label>Selecione Município:</label>
